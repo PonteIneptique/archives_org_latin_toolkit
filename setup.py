@@ -11,7 +11,7 @@ setup(
     license='MIT',
     packages=find_packages(exclude=("tests")),
     install_requires=[
-        "pandas>=0.17.1"
+        "pandas==0.18.1"
     ],
     test_suite="tests",
     zip_safe=False
