@@ -10,7 +10,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   Archives.org.latin.API
+   Archives.org.latin
 
 
 Indices and tables
