@@ -1,6 +1,3 @@
-Archives.org Latin Toolkit
-==========================
-
 .. image:: https://coveralls.io/repos/github/PonteIneptique/archives_org_latin_toolkit/badge.svg?branch=master
     :target: https://coveralls.io/github/PonteIneptique/archives_org_latin_toolkit?branch=master
 .. image:: https://travis-ci.org/PonteIneptique/archives_org_latin_toolkit.svg?branch=master
