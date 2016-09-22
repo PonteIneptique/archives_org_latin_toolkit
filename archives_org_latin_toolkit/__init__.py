@@ -1,4 +1,4 @@
-""" Module from
+""" Module from http://github.com/ponteineptique/archives_org_latin_toolkit
 
 """
 
@@ -140,6 +140,12 @@ class Text:
                 self.__clean__ = self.__clean__.lower()
         return self.__clean__
 
+    def cleanUp(self):
+        """ Clean textual information and free RAM
+        """
+        self.__raw__ = None
+        self.__clean__ = None
+
     def has_strings(self, *strings):
         """ Check if given string is in the file
 
@@ -154,7 +160,7 @@ class Text:
                 break
         return status
 
-    def find_embedding(self, *strings, window=50, ignore_center=False):
+    def find_embedding(self, *strings, window=50, ignore_center=False, memory_efficient=True):
         """ Check if given string is in the file
 
         :param strings: Strings as multiple arguments
@@ -170,6 +176,9 @@ class Text:
                     yield [w for w in __window__(array, window, i) if w != x]
                 else:
                     yield __window__(array, window, i)
+
+        if memory_efficient:
+            self.cleanUp()
 
 
 class Repo:
@@ -202,12 +211,14 @@ class Repo:
         """
         return self.__files__[identifier]
 
-    def find(self, *strings, multiprocess=None):
+    def find(self, *strings, multiprocess=None, memory_efficient=True):
         """ Find files who contains given strings
 
         :param strings: Strings as multiple arguments
         :param multiprocess: Number of process to spawn
         :type multiprocess: int
+        :param memory_efficient: Drop the content of files to avoid filling the ram with unused content
+        :type memory_efficient: bool
         :return: Files who are matching the strings
         :rtype: generator
         """
@@ -215,7 +226,7 @@ class Repo:
             files = list(self.__files__.values())
             chunksize = int(math.ceil(len(files) / float(multiprocess)))
             kwargs = [
-                (strings, files[chunksize * i:chunksize * (i + 1)])
+                (strings, files[chunksize * i:chunksize * (i + 1)], memory_efficient)
                 for i in range(multiprocess)
             ]
             pool = multiprocessing.Pool(multiprocess)
@@ -226,6 +237,8 @@ class Repo:
             for file in self.__files__.values():
                 if file.has_strings(*strings):
                     yield file
+                self.__files__[file.name].__raw__ = None
+                self.__files__[file.name].__clean__ = None
 
 
 def __find_multiprocess__(args):
@@ -235,8 +248,14 @@ def __find_multiprocess__(args):
     :return: Files who are matching the strings
     :rtype: list
     """
-    strings, files = args
-    return [file for file in files if file.has_strings(*strings)]
+    strings, files, memoryefficient = args
+    results = []
+    while len(files):
+        file = files.pop()
+        if file.has_strings(*strings):
+            results.append(file)
+            file.cleanUp()
+    return results
 
 
 def __window__(array, window, i):
@@ -245,6 +264,8 @@ def __window__(array, window, i):
     :param strings:
     :param window: Number of word to take left, then right [ len(result) = (2*window)+1 ]
     :param i: Index of the word
+    :param memory_efficient: Drop the content of files to avoid filling the ram with unused content
+    :type memory_efficient: bool
     :return: List of words
     """
     return array[max(i-window, 0):min(i+window+1, len(array))]

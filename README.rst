@@ -7,6 +7,8 @@
 .. image:: https://readthedocs.org/projects/archives-org-latin-toolkit/badge/?version=latest
     :alt: Documentation
     :target: https://archives-org-latin-toolkit.readthedocs.io
+.. image:: https://zenodo.org/badge/68894385.svg
+   :target: https://zenodo.org/badge/latestdoi/68894385
 
 What ?
 ######

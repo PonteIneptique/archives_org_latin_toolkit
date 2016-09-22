@@ -104,6 +104,25 @@ class Test_Metadata(TestCase):
             "There should be no punctuation, double space, or number."
         )
 
+    def test_cleanup(self):
+        """ Check that cleaning works well """
+        self.assertEqual(
+            self.file1.clean[:100],
+            "tJrm Rivington s Educational List A First German Book By H S Beresford Webb is d German Examination ",
+            "We should access the string"
+        )
+        self.file1.cleanUp()
+        self.assertEqual(
+            (self.file1.__raw__, self.file1.__clean__), (None, None),
+            "Cache should be clean"
+        )
+        self.assertEqual(
+            self.file1.clean[:100],
+            "tJrm Rivington s Educational List A First German Book By H S Beresford Webb is d German Examination ",
+            "Cache should be rebuilt"
+        )
+
+
     def test_cleaning_lowercase(self):
         """ Check that lowercase cleaning works well, also get text"""
         metadata = Metadata("./test/test_data/latin_metadata.csv")
