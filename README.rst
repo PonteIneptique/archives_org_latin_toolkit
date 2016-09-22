@@ -34,6 +34,7 @@ Example
 The following example should run with the data in tests/test_data. The example can be run with :code:`python example.py`
 
 .. code-block:: python
+
     # We import the main classes from the module
     from archives_org_latin_toolkit import Repo, Metadata
     from pprint import pprint
