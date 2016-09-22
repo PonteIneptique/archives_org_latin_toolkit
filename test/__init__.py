@@ -4,10 +4,10 @@ from unittest import TestCase
 
 class Test_Metadata(TestCase):
     def setUp(self):
-        self.metadata = Metadata("./tests/test_data/latin_metadata.csv")
-        self.file1 = Text("./tests/test_data/archive_org_latin/1887proacluentioo00cice", metadata=self.metadata)
-        self.file2 = Text("./tests/test_data/archive_org_latin/4621489", metadata=self.metadata)
-        self.repo = Repo("./tests/test_data/archive_org_latin/", metadata=self.metadata)
+        self.metadata = Metadata("./test/test_data/latin_metadata.csv")
+        self.file1 = Text("./test/test_data/archive_org_latin/1887proacluentioo00cice", metadata=self.metadata)
+        self.file2 = Text("./test/test_data/archive_org_latin/4621489", metadata=self.metadata)
+        self.repo = Repo("./test/test_data/archive_org_latin/", metadata=self.metadata)
         self.maxDiff = 200
 
     def test_date(self):
@@ -106,8 +106,8 @@ class Test_Metadata(TestCase):
 
     def test_cleaning_lowercase(self):
         """ Check that lowercase cleaning works well, also get text"""
-        metadata = Metadata("./tests/test_data/latin_metadata.csv")
-        repo = Repo("./tests/test_data/archive_org_latin/", metadata=metadata, lowercase=True)
+        metadata = Metadata("./test/test_data/latin_metadata.csv")
+        repo = Repo("./test/test_data/archive_org_latin/", metadata=metadata, lowercase=True)
         self.assertEqual(
             repo.get("1885denovahieros00sweduoft").clean[:100],
             "de nova hierosolyma et ejus doctrina caelesti ex auditis e caelo quibus praemittitur aliquid de novo",

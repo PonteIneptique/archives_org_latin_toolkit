@@ -3,9 +3,9 @@ from archives_org_latin_toolkit import Repo, Metadata
 from pprint import pprint
 
 # We initiate a Metadata object and a Repo object
-metadata = Metadata("./tests/test_data/latin_metadata.csv")
+metadata = Metadata("./test/test_data/latin_metadata.csv")
 # We want the text to be set in lowercase
-repo = Repo("./tests/test_data/archive_org_latin/", metadata=metadata, lowercase=True)
+repo = Repo("./test/test_data/archive_org_latin/", metadata=metadata, lowercase=True)
 
 # We define a list of token we want to search for
 tokens = ["ecclesiastico", "ecclesia", "ecclesiis", "&quot;"]

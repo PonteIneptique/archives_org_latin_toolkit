@@ -9,10 +9,10 @@ setup(
     author='Thibault Clérice',
     author_email='leponteineptique@gmail.com',
     license='MIT',
-    packages=find_packages(exclude=("tests")),
+    packages=find_packages(exclude=("test")),
     install_requires=[
         "pandas==0.18.1"
     ],
-    test_suite="tests",
+    test_suite="test",
     zip_safe=False
 )
