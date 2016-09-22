@@ -56,11 +56,11 @@ class Metadata:
             dtype={
                 "identifier": str,
                 "creator": str,
-                "title": str
+                "title": str,
+                "date of publication": str
             },
             converters={
-                "date of composition": period,
-                "date of publication": period
+                "date of composition": period
             },
             encoding="latin1"
         )
