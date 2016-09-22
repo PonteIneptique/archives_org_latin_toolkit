@@ -22,12 +22,10 @@ Classes
 Helpers
 =======
 
-.. autofunc:: archives_org_latin_toolkit.period
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. autofunction:: archives_org_latin_toolkit.period
 
-.. autofunc:: archives_org_latin_toolkit.bce
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. autofunction:: archives_org_latin_toolkit.bce
+
+.. autofunction:: archives_org_latin_toolkit.__window__
+
+.. autofunction:: archives_org_latin_toolkit.__find_multiprocess__
