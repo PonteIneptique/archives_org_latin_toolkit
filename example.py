@@ -8,14 +8,14 @@ metadata = Metadata("./test/test_data/latin_metadata.csv")
 repo = Repo("./test/test_data/archive_org_latin/", metadata=metadata, lowercase=True)
 
 # We define a list of token we want to search for
-tokens = ["ecclesiastico", "ecclesia", "ecclesiis", "&quot;"]
+tokens = ["ecclesiastico", "ecclesia", "ecclesiis"]
 
 # We instantiate a result storage
 results = []
 
 # We iter over text having those tokens :
 # Note that we need to "unzip" the list
-for text_matching in repo.find(*tokens):
+for text_matching in repo.find(*tokens, multiprocess=4):
 
     # For each text, we iter over embeddings found in the text
     # We want 3 words left, 3 words right,
