@@ -122,7 +122,6 @@ class Test_Metadata(TestCase):
             "Cache should be rebuilt"
         )
 
-
     def test_cleaning_lowercase(self):
         """ Check that lowercase cleaning works well, also get text"""
         metadata = Metadata("./test/test_data/latin_metadata.csv")
@@ -133,4 +132,37 @@ class Test_Metadata(TestCase):
             "There should be no punctuation, double space, number, entities or uppercase."
         )
 
+    def test_random_text(self):
+        """ Check that lowercase cleaning works well, also get text"""
+        metadata = Metadata("./test/test_data/latin_metadata.csv")
+        repo = Repo("./test/test_data/archive_org_latin/", metadata=metadata, lowercase=True)
 
+        # We randomly picks 100 time just to be sure it works well
+        for i in range(0, 100):
+            embeddings = list(repo.get("1885denovahieros00sweduoft").random_embedding(50, window=5, avoid=[
+                "vitae", "vita", "vitam", "vitas", "vitarum", "vitis"
+            ]))
+            self.assertEqual(
+                len(embeddings), 50, "We should grab random"
+            )
+            for text in embeddings:
+                self.assertEqual(
+                    len(text), 11, "There should be eleven words"
+                )
+                self.assertNotIn(
+                    True, [x in ["vitae", "vita", "vitam", "vitas", "vitarum", "vitis"] for x in text],
+                    "vita should not be there"
+                )
+
+    def test_subliste(self):
+        x = [
+            'The', 'modules', 'described', 'in', 'this', 'chapter', 'provide', 'a', 'wide', 'range', 'of', 'string',
+            'manipulation', 'operations', 'and', 'other', 'text', 'processing', 'services.', 'The', 'codecs', 'module',
+            'described', 'under', 'Binary', 'Data', 'Services', 'is', 'also', 'highly', 'relevant', 'to', 'text',
+            'processing.', 'In', 'addition,', 'see', 'the', 'documentation', 'for', 'Python’s', 'built-in', 'string',
+            'type', 'in', 'Text', 'processing', 'Sequence', 'Type', '—', 'str.'
+        ]
+        s, e = find_sub_list(["to", "text"], x)
+        self.assertEqual(
+            x[s:e], ["to", "text"], "Subliste should be retrieved"
+        )

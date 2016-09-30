@@ -7,9 +7,23 @@ import os
 import re
 import multiprocessing
 import math
+from random import randrange, random
+from collections import Counter
+import csv
 
 __numb__ = re.compile("([-]?\d+( BCE)?)")
 
+
+def find_sub_list(subliste, liste):
+    # While not found
+    # get .index(subliste[0])
+    # check if l
+    sub_len = len(subliste)
+    for i in range(0, liste.count(subliste[0])):
+        start = liste.index(subliste[0])
+        end = start + sub_len
+        if subliste == liste[start:end]:
+            return start, end
 
 def bce(x):
     """ Format A BCE string
@@ -180,6 +194,54 @@ class Text:
         if memory_efficient:
             self.cleanUp()
 
+    def random_embedding(self, grab, window=50, avoid=None, memory_efficient=True, _taken=None, _generator=True):
+        """ Search for random sentences in the text. Can avoid certain words
+
+        :param grab: Number of random sequence to retrieve
+        :type grab: int
+        :param window: Number of lines to retrieve
+        :type window: int
+        :param avoid: List of lemmas NOT TO be included in random
+        :param _taken: Used internally to check we do not sample with the same element again
+        :param _generator: If set to True, returns the window and its index in the text
+        :return: Generator with random texts
+
+        .. note:: Right now, new window found are not added to _taken, which is problematic
+        """
+        split_text = self.clean.split()
+        max_range = len(split_text)
+        if not _taken:
+            _taken = []
+        if not avoid:
+            avoid = []
+
+        # For each random sample we need to get
+        for i in range(0, grab):
+            # We get a random index (starting at window)
+            ri = randrange(window, max_range, step=(window*2)+1+randrange(0, 10))
+            # We check that the new index does not belong to any previous range
+            if True in [ri in range(*t) for t in _taken]:
+                w, _t = next(
+                    self.random_embedding(1, window, avoid, memory_efficient, _taken=_taken, _generator=False)
+                )
+                _taken.append(_t)
+            else:
+                w = __window__(split_text, window, ri)
+                # We check avoided lemma is not in the window
+                if True in [word in avoid for word in w]:
+                    w, _t = next(
+                        self.random_embedding(1, window, avoid, memory_efficient, _taken=_taken, _generator=False)
+                    )
+                    _taken.append(_t)
+                else:
+                    _taken.append((ri-window*2, ri+window*2))
+            if _generator:
+                yield w
+            else:
+                yield w, _taken[-1]
+        if memory_efficient:
+            self.cleanUp()
+
 
 class Repo:
     """ Repo reading object for archive_org
@@ -200,6 +262,10 @@ class Repo:
             for root, dirs, files in os.walk(directory)
             for file in files
         }
+
+    @property
+    def metadata(self):
+        return self.__metadata__
 
     def get(self, identifier):
         """ Get the Text object given its identifier
@@ -239,6 +305,149 @@ class Repo:
                     yield file
                 self.__files__[file.name].__raw__ = None
                 self.__files__[file.name].__clean__ = None
+
+
+class Search:
+    """ Tool to make search, caching and corpus building easier for further requests
+
+    :param filename: Name of the file to which you want to save results (Without extension !)
+    :param lemmas: Strings as multiple arguments
+    :param multiprocess: Number of process to spawn
+    :type multiprocess: int
+    :param memory_efficient: Drop the content of files to avoid filling the ram with unused content
+    :type memory_efficient: bool
+    """
+    def __init__(self,
+                 repository, filename, *lemmas,
+                 ignore_center=True, window=50,
+                 multiprocess=None, memory_efficient=True
+        ):
+        self.__repository__ = repository
+        self.__filename__ = filename
+        self.__window__ = window
+        self.__ignore_center = ignore_center
+        self.__lemmas__ = list(lemmas)
+        self.__multiprocess__ = multiprocess
+        self.__memory_efficient__ = memory_efficient
+        self.__results_dispatch__ = Counter()
+
+    @property
+    def filename(self):
+        return self.__filename__+".csv"
+
+    @property
+    def random_filename(self):
+        return self.__filename__+".rdm.csv"
+
+    @property
+    def repository(self):
+        """
+
+        :return:
+        :rtype: Repository
+        """
+        return self.__repository__
+
+    def execute(self):
+        """ Execute the research on the corpus
+
+        :return: A generator of tuples (date, text id, window)
+        """
+        # We iter over text having those tokens :
+        # Note that we need to "unzip" the list
+        for text_matching in self.repository.find(
+                *self.__lemmas__,
+                multiprocess=self.__multiprocess__,
+                memory_efficient=self.__memory_efficient__
+        ):
+            # For each text, we iter over embeddings found in the text
+            # We want WINDOW words left, WINDOW words right,
+            # and we want to keep the original token (Default behaviour)
+            date = text_matching.composed
+            for embedding in text_matching.find_embedding(
+                    *self.__lemmas__,
+                    window=self.__window__,
+                    ignore_center=self.__ignore_center,
+                    memory_efficient=self.__memory_efficient__
+            ):
+                # We add it to the results
+                yield (date, text_matching.name, " ".join(embedding))
+
+            if self.__memory_efficient__:
+                # This prevent memory struggle
+                self.repository.__files__[text_matching.name].__raw__ = None
+                self.repository.__files__[text_matching.name].__clean__ = None
+                del text_matching
+
+    def to_csv(self, _function="execute", with_random=True):
+        if _function == "execute":
+            _function = self.execute
+            _counter = True
+            filename = self.filename
+        else:
+            _function = self.random
+            _counter = False
+            with_random = False
+            filename = self.random_filename
+
+        with open(filename, "w", newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter='\t')
+            writer.writerow(["date", "source", "tokens"])
+
+        stack = []
+        for row in _function():
+            if _counter:
+                self.__results_dispatch__[row[1]] += 1
+            stack.append(list(row))
+            if len(stack) == 50:
+                with open(filename, "a", newline='') as csvfile:
+                    writer = csv.writer(csvfile, delimiter='\t')
+                    writer.writerows(stack)
+                stack = []
+
+        with open(filename, "a", newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter='\t')
+            writer.writerows(stack)
+
+        if with_random:
+            self.to_csv("random", with_random=False)
+
+        return True
+
+    def from_csv(self, with_random=True):
+        read = lambda file: read_csv(
+            csvfile,
+            delimiter="\t",
+            index_col=None,
+            dtype={
+                "date": int,
+                "source": str,
+                "tokens": str
+            },
+            encoding="utf8"
+        )
+        with open(self.filename, "r") as csvfile:
+            corpus = read(csvfile)
+        if with_random and os.path.isfile(self.random_filename):
+            with open(self.random_filename, "r") as csvfile:
+                random_corpus = read(csvfile)
+            return corpus, random_corpus
+        else:
+            return corpus
+
+    def random(self):
+        for text, grab_number in self.__results_dispatch__.items():
+            for match in self.repository.get(text).random_embedding(
+                grab_number, window=self.__window__, avoid=None,
+                memory_efficient=self.__memory_efficient__
+            ):
+                yield self.repository.get(text).composed, text, match
+
+        if self.__memory_efficient__:
+            # This prevent memory struggle
+            self.repository.get(text).__raw__ = None
+            self.repository.get(text).__clean__ = None
+
 
 
 def __find_multiprocess__(args):
