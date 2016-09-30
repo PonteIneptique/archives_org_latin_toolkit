@@ -7,7 +7,7 @@ import os
 import re
 import multiprocessing
 import math
-from random import randrange, random
+from random import randrange
 from collections import Counter
 import csv
 
@@ -24,6 +24,7 @@ def find_sub_list(subliste, liste):
         end = start + sub_len
         if subliste == liste[start:end]:
             return start, end
+
 
 def bce(x):
     """ Format A BCE string
@@ -218,7 +219,7 @@ class Text:
         # For each random sample we need to get
         for i in range(0, grab):
             # We get a random index (starting at window)
-            ri = randrange(window, max_range, step=(window*2)+1+randrange(0, 10))
+            ri = randrange(window, max_range, step=(window*2)+1+randrange(0, 5))
             # We check that the new index does not belong to any previous range
             if True in [ri in range(*t) for t in _taken]:
                 w, _t = next(
@@ -228,7 +229,7 @@ class Text:
             else:
                 w = __window__(split_text, window, ri)
                 # We check avoided lemma is not in the window
-                if True in [word in avoid for word in w]:
+                if True in [word in avoid for word in w] or len(w) < window+1:
                     w, _t = next(
                         self.random_embedding(1, window, avoid, memory_efficient, _taken=_taken, _generator=False)
                     )
@@ -317,10 +318,11 @@ class Search:
     :param memory_efficient: Drop the content of files to avoid filling the ram with unused content
     :type memory_efficient: bool
     """
-    def __init__(self,
-                 repository, filename, *lemmas,
-                 ignore_center=True, window=50,
-                 multiprocess=None, memory_efficient=True
+    def __init__(
+            self,
+            repository, filename, *lemmas,
+            ignore_center=True, window=50,
+            multiprocess=None, memory_efficient=True
         ):
         self.__repository__ = repository
         self.__filename__ = filename
@@ -438,16 +440,15 @@ class Search:
     def random(self):
         for text, grab_number in self.__results_dispatch__.items():
             for match in self.repository.get(text).random_embedding(
-                grab_number, window=self.__window__, avoid=None,
+                grab_number, window=self.__window__, avoid=self.__lemmas__,
                 memory_efficient=self.__memory_efficient__
             ):
                 yield self.repository.get(text).composed, text, match
 
-        if self.__memory_efficient__:
-            # This prevent memory struggle
-            self.repository.get(text).__raw__ = None
-            self.repository.get(text).__clean__ = None
-
+            if self.__memory_efficient__:
+                # This prevent memory struggle
+                self.repository.get(text).__raw__ = None
+                self.repository.get(text).__clean__ = None
 
 
 def __find_multiprocess__(args):
