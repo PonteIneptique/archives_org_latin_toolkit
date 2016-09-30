@@ -235,7 +235,7 @@ class Text:
                     )
                     _taken.append(_t)
                 else:
-                    _taken.append((ri-window*2, ri+window*2))
+                    _taken.append((ri-window, ri+window))
             if _generator:
                 yield w
             else:
@@ -443,7 +443,7 @@ class Search:
                 grab_number, window=self.__window__, avoid=self.__lemmas__,
                 memory_efficient=self.__memory_efficient__
             ):
-                yield self.repository.get(text).composed, text, match
+                yield self.repository.get(text).composed, text, " ".join(match)
 
             if self.__memory_efficient__:
                 # This prevent memory struggle
